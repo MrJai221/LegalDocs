@@ -1,0 +1,111 @@
+<!-- File: frontend/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Legal Document Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="main-container">
+    <div class="container">
+      <select id="docType">
+        <option value="freelance">Freelance Contract</option>
+        <option value="nda">NDA</option>
+        <option value="employment">Employment Letter</option>
+      </select>
+
+      <form id="docForm">
+        <div id="formFields"></div>
+        <div class="signature-box">
+          <label>Digital Signature:</label>
+          <canvas id="signaturePad"></canvas>
+          <button type="button" class="clear-button" onclick="clearSignature()">Clear</button>
+        </div>
+        <button type="submit">Generate PDF</button>
+        <div id="downloadLink"></div>
+      </form>
+    </div>
+
+    <div class="gallery-container">
+      <h2>Freelancer Gallery</h2>
+      <div class="slider">
+        <img src="img1.png" class="active" />
+        <img src="img2.png" />
+        <img src="img3.png" />
+      </div>
+      <div class="quote">“Your dream job doesn’t exist. You must create it.”</div>
+    </div>
+  </div>
+
+  <script>
+    const docTypeSelect = document.getElementById('docType');
+    const formFields = document.getElementById('formFields');
+    const docForm = document.getElementById('docForm');
+    const downloadLink = document.getElementById('downloadLink');
+    const canvas = document.getElementById("signaturePad");
+    const ctx = canvas.getContext("2d");
+    let drawing = false;
+
+    const fields = {
+      freelance: ["clientName", "freelancerName", "startDate"],
+      nda: ["partyOne", "partyTwo", "effectiveDate", "projectName", "duration"],
+      employment: ["employeeName", "position", "companyName", "startDate", "salary", "employerName"]
+    };
+
+    function drawFormFields(type) {
+      formFields.innerHTML = "";
+      fields[type].forEach(id => {
+        const label = `<label>${id}</label>`;
+        const input = `<input type='text' id='${id}' required />`;
+        formFields.innerHTML += label + input;
+      });
+    }
+
+    function clearSignature() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    canvas.addEventListener("mousedown", () => drawing = true);
+    canvas.addEventListener("mouseup", () => drawing = false);
+    canvas.addEventListener("mousemove", (e) => {
+      if (!drawing) return;
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "#0d47a1";
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    });
+
+    docTypeSelect.addEventListener('change', (e) => drawFormFields(e.target.value));
+    drawFormFields(docTypeSelect.value);
+
+    docForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const type = docTypeSelect.value;
+      const data = {};
+      fields[type].forEach(id => data[id] = document.getElementById(id).value);
+      data.signature = canvas.toDataURL();
+
+      const res = await fetch("http://localhost:5000/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, data })
+      });
+      const result = await res.json();
+      downloadLink.innerHTML = `<a href="${result.url}" target="_blank">Download PDF</a>`;
+    });
+
+    // Slider JS
+    const slides = document.querySelectorAll('.slider img');
+    let index = 0;
+    setInterval(() => {
+      slides.forEach((img, i) => img.classList.toggle('active', i === index));
+      index = (index + 1) % slides.length;
+    }, 4000);
+  </script>
+</body>
+</html>

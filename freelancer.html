@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employment Letter Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #0d47a1;
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #signaturePreview {
+      width: 150px;
+      display: none;
+      margin-top: 10px;
+    }
+
+    #printArea {
+      display: none;
+      width: 794px;
+      padding: 10px 10px 0px 10px;
+      background-color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 14pt;
+      color: #000;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    #printArea h2 {
+      text-align: center;
+      color: #0a53be;
+      margin-bottom: 30px;
+    }
+
+    #letterText {
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    #signatureImage {
+      width: 200px;
+      border: 1px solid #000;
+      margin-top: 10px;
+      padding: 4px;
+      display: none;
+    }
+
+    .no-break {
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Employment Letter Generator</h2>
+  <form id="empForm">
+    <label>Employee Name:</label>
+    <input type="text" id="employeeName" required>
+
+    <label>Company Name:</label>
+    <input type="text" id="companyName" required>
+
+    <label>Position:</label>
+    <input type="text" id="position" required>
+
+    <label>Start Date:</label>
+    <input type="date" id="startDate" required>
+
+    <label>Monthly Salary:</label>
+    <input type="text" id="salary" required>
+
+    <label>Upload Signature:</label>
+    <input type="file" id="signatureUpload" accept="image/*" required>
+    <img id="signaturePreview" src="" />
+
+    <button type="button" id="previewBtn">Preview</button>
+    <button type="button" id="downloadBtn" style="display:none;">Download PDF</button>
+  </form>
+</div>
+
+<!-- Printable Area -->
+<div id="printArea">
+  <h2>Employment Confirmation Letter</h2>
+  <div id="letterText"></div>
+
+  <div class="no-break">
+    <p style="margin-top: 20px; font-weight: bold;">Authorized Signature:</p>
+    <img id="signatureImage" src="" alt="Signature">
+  </div>
+</div>
+
+<script>
+  const previewBtn = document.getElementById("previewBtn");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const signatureUpload = document.getElementById("signatureUpload");
+  const signaturePreview = document.getElementById("signaturePreview");
+  const signatureImage = document.getElementById("signatureImage");
+  const letterTextEl = document.getElementById("letterText");
+  const printArea = document.getElementById("printArea");
+
+  let uploadedSignature = "";
+
+  signatureUpload.addEventListener("change", () => {
+    const file = signatureUpload.files[0];
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      uploadedSignature = reader.result;
+      signaturePreview.src = uploadedSignature;
+      signaturePreview.style.display = "block";
+    };
+    if (file) reader.readAsDataURL(file);
+  });
+
+  previewBtn.addEventListener("click", () => {
+    const employeeName = document.getElementById("employeeName").value;
+    const companyName = document.getElementById("companyName").value;
+    const position = document.getElementById("position").value;
+    const startDate = document.getElementById("startDate").value;
+    const salary = document.getElementById("salary").value;
+
+    const today = new Date().toLocaleDateString();
+
+    const letterHTML = `
+      <p>Date: ${today}</p>
+      <p>To,</p>
+      <p><strong>${employeeName}</strong><br/></p>
+      <p>Subject: <strong>Employment Confirmation</strong></p>
+      <p>Dear ${employeeName},</p>
+      <p>We are pleased to confirm your appointment at <strong>${companyName}</strong> as a <strong>${position}</strong> starting from <strong>${startDate}</strong>. Your monthly salary will be <strong>₹${salary}</strong>.</p>
+      <p>We look forward to a productive and successful journey together. This letter serves as your official employment confirmation.</p>
+      <p>Sincerely,<br/><strong>${companyName} HR Department</strong></p>
+    `;
+
+    letterTextEl.innerHTML = letterHTML;
+    signatureImage.src = uploadedSignature;
+    signatureImage.style.display = "block";
+
+    downloadBtn.style.display = "block";
+    printArea.style.display = "block";
+  });
+
+  downloadBtn.addEventListener("click", async () => {
+    printArea.style.display = "block";
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const opt = {
+      margin: [10, 0, 0, 10],
+      filename: 'employment_letter.pdf',
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        scrollY: 0,
+        scrollX: 0
+      },
+      jsPDF: {
+        unit: 'pt',
+        format: [595.28, 841.89], // A4 size
+        orientation: 'portrait'
+      },
+      pagebreak: { mode: ['avoid-all'] }
+    };
+
+    await html2pdf().set(opt).from(printArea).save();
+    printArea.style.display = "none";
+  });
+</script>
+
+</body>
+</html>

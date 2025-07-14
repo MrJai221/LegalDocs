@@ -1,0 +1,135 @@
+<!-- Employment Letter Generator with Preview -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employment Letter Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    h2 { text-align: center; color: #0d47a1; margin-bottom: 20px; }
+    label { font-weight: bold; display: block; margin-top: 15px; }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #signaturePreview { width: 150px; display: none; margin-top: 10px; }
+    #previewBox { display: none; max-width: 600px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Employment Letter Generator</h2>
+  <form id="empForm">
+    <label>Employee Name:</label>
+    <input type="text" id="employeeName" required>
+
+    <label>Employer Company:</label>
+    <input type="text" id="companyName" required>
+
+    <label>Position:</label>
+    <input type="text" id="position" required>
+
+    <label>Start Date:</label>
+    <input type="date" id="startDate" required>
+
+    <label>Salary:</label>
+    <input type="text" id="salary" required>
+
+    <label>Upload Signature:</label>
+    <input type="file" id="signatureUpload" accept="image/*" required>
+    <img id="signaturePreview" src="" />
+
+    <button type="button" id="previewBtn">Preview</button>
+    <button type="button" id="downloadBtn" style="display:none;">Download PDF</button>
+  </form>
+</div>
+
+<div id="previewBox">
+  <h2>Employment Letter</h2>
+  <p id="pdfEmployeeName"></p>
+  <p id="pdfCompanyName"></p>
+  <p id="pdfPosition"></p>
+  <p id="pdfStartDate"></p>
+  <p id="pdfSalary"></p>
+  <p>Signature:</p>
+  <img id="signatureImage" style="width:150px;border:1px solid #000;" />
+</div>
+
+<script>
+  const previewBtn = document.getElementById("previewBtn");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const signatureUpload = document.getElementById("signatureUpload");
+  const signaturePreview = document.getElementById("signaturePreview");
+  const signatureImage = document.getElementById("signatureImage");
+  const previewBox = document.getElementById("previewBox");
+  let uploadedSignature = "";
+
+  signatureUpload.addEventListener("change", () => {
+    const file = signatureUpload.files[0];
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      uploadedSignature = reader.result;
+      signaturePreview.src = uploadedSignature;
+      signaturePreview.style.display = "block";
+    };
+    if (file) reader.readAsDataURL(file);
+  });
+
+  previewBtn.addEventListener("click", () => {
+    document.getElementById("pdfEmployeeName").textContent = "Employee Name: " + document.getElementById("employeeName").value;
+    document.getElementById("pdfCompanyName").textContent = "Company: " + document.getElementById("companyName").value;
+    document.getElementById("pdfPosition").textContent = "Position: " + document.getElementById("position").value;
+    document.getElementById("pdfStartDate").textContent = "Start Date: " + document.getElementById("startDate").value;
+    document.getElementById("pdfSalary").textContent = "Salary: " + document.getElementById("salary").value;
+    signatureImage.src = uploadedSignature;
+
+    previewBox.style.display = "block";
+    downloadBtn.style.display = "block";
+  });
+
+  downloadBtn.addEventListener("click", async () => {
+    await html2pdf().from(previewBox).set({
+      margin: 10,
+      filename: "employment_letter.pdf",
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).save();
+  });
+</script>
+</body>
+</html>
