@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Employment Letter Generator</title>
+  <title>Freelance Contract Generator</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
@@ -47,6 +47,11 @@
       border: 1px solid #ccc;
     }
 
+    textarea {
+      resize: vertical;
+      height: 80px;
+    }
+
     button {
       margin-top: 20px;
       width: 100%;
@@ -67,15 +72,16 @@
 
     #printArea {
       display: none;
-      width: 794px;
-      padding: 10px 10px 0px 10px;
+      width: 794px; /* A4 width in px at 96dpi */
+      padding: 10px 10px 0px 10px; /* Remove vertical gap */
       background-color: #fff;
       font-family: 'Segoe UI', sans-serif;
       font-size: 14pt;
       color: #000;
       box-sizing: border-box;
-      overflow: hidden;
+      overflow: hidden; /* Prevent overflow */
     }
+
 
     #printArea h2 {
       text-align: center;
@@ -83,8 +89,8 @@
       margin-bottom: 30px;
     }
 
-    #letterText {
-      line-height: 1.6;
+    #contractText {
+      line-height: 1.5;
       margin-bottom: 20px;
     }
 
@@ -104,22 +110,19 @@
 <body>
 
 <div class="container">
-  <h2>Employment Letter Generator</h2>
-  <form id="empForm">
-    <label>Employee Name:</label>
-    <input type="text" id="employeeName" required>
+  <h2>Freelance Contract Generator</h2>
+  <form id="freelanceForm">
+    <label>Client Name:</label>
+    <input type="text" id="clientName" required>
 
-    <label>Company Name:</label>
-    <input type="text" id="companyName" required>
-
-    <label>Position:</label>
-    <input type="text" id="position" required>
+    <label>Freelancer Name:</label>
+    <input type="text" id="freelancerName" required>
 
     <label>Start Date:</label>
     <input type="date" id="startDate" required>
 
-    <label>Monthly Salary:</label>
-    <input type="text" id="salary" required>
+    <label>Work Description / Clauses:</label>
+    <textarea id="clauses" placeholder="Describe the work or add custom clauses" required></textarea>
 
     <label>Upload Signature:</label>
     <input type="file" id="signatureUpload" accept="image/*" required>
@@ -130,13 +133,14 @@
   </form>
 </div>
 
-<!-- Printable Area -->
+<!-- Printable PDF Content -->
 <div id="printArea">
-  <h2>Employment Confirmation Letter</h2>
-  <div id="letterText"></div>
+  <h2>Freelance Contract</h2>
+
+  <div id="contractText"></div>
 
   <div class="no-break">
-    <p style="margin-top: 20px; font-weight: bold;">Authorized Signature:</p>
+    <p style="margin-top: 20px; font-weight: bold;">Signature:</p>
     <img id="signatureImage" src="" alt="Signature">
   </div>
 </div>
@@ -147,7 +151,7 @@
   const signatureUpload = document.getElementById("signatureUpload");
   const signaturePreview = document.getElementById("signaturePreview");
   const signatureImage = document.getElementById("signatureImage");
-  const letterTextEl = document.getElementById("letterText");
+  const contractTextEl = document.getElementById("contractText");
   const printArea = document.getElementById("printArea");
 
   let uploadedSignature = "";
@@ -164,26 +168,23 @@
   });
 
   previewBtn.addEventListener("click", () => {
-    const employeeName = document.getElementById("employeeName").value;
-    const companyName = document.getElementById("companyName").value;
-    const position = document.getElementById("position").value;
+    const clientName = document.getElementById("clientName").value;
+    const freelancerName = document.getElementById("freelancerName").value;
     const startDate = document.getElementById("startDate").value;
-    const salary = document.getElementById("salary").value;
+    const clauses = document.getElementById("clauses").value;
 
-    const today = new Date().toLocaleDateString();
-
-    const letterHTML = `
-      <p>Date: ${today}</p>
-      <p>To,</p>
-      <p><strong>${employeeName}</strong><br/></p>
-      <p>Subject: <strong>Employment Confirmation</strong></p>
-      <p>Dear ${employeeName},</p>
-      <p>We are pleased to confirm your appointment at <strong>${companyName}</strong> as a <strong>${position}</strong> starting from <strong>${startDate}</strong>. Your monthly salary will be <strong>₹${salary}</strong>.</p>
-      <p>We look forward to a productive and successful journey together. This letter serves as your official employment confirmation.</p>
-      <p>Sincerely,<br/><strong>${companyName} HR Department</strong></p>
+    const contractText = `
+      <p style="font-weight: bold;">FREELANCE SERVICES AGREEMENT</p>
+      <p>This Agreement is made on ${new Date().toLocaleDateString()} between <strong>${clientName}</strong> ("Client") and <strong>${freelancerName}</strong> ("Freelancer"). 
+      ${freelancerName} agrees to perform the following services: <em>${clauses}</em>. Services shall commence on <strong>${startDate}</strong> and conclude upon completion of the agreed work. 
+      The Client agrees to pay the Freelancer as per agreed milestones. All deliverables shall be the property of the Client upon full payment. 
+      The Freelancer agrees not to disclose any confidential or proprietary information. Either party may terminate this agreement with a written notice of 7 days.</p>
+      <p><strong>Signed by the parties:</strong></p>
+      <p>Client: ${clientName} _____________________<br>Freelancer: ${freelancerName}</p>
     `;
 
-    letterTextEl.innerHTML = letterHTML;
+    contractTextEl.innerHTML = contractText;
+
     signatureImage.src = uploadedSignature;
     signatureImage.style.display = "block";
 
@@ -196,8 +197,8 @@
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const opt = {
-      margin: [10, 0, 0, 10],
-      filename: 'employment_letter.pdf',
+      margin: [10,0,0,10], // Remove default margin
+      filename: 'freelance_contract.pdf',
       image: { type: 'jpeg', quality: 1 },
       html2canvas: {
         scale: 2,
@@ -207,15 +208,16 @@
       },
       jsPDF: {
         unit: 'pt',
-        format: [595.28, 841.89], // A4 size
+        format: [595.28, 841.89], // A4 in points (width x height)
         orientation: 'portrait'
       },
-      pagebreak: { mode: ['avoid-all'] }
+      pagebreak: { mode: ['avoid-all'] } // Avoid page breaks
     };
 
     await html2pdf().set(opt).from(printArea).save();
     printArea.style.display = "none";
   });
+
 </script>
 
 </body>
